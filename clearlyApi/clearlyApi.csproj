@@ -24,6 +24,8 @@
     <Folder Include="Dto\" />
     <Folder Include="Dto\Response\" />
     <Folder Include="Dto\Request\" />
+    <Folder Include="Services\" />
+    <Folder Include="Services\Auth\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Migrations\20191128191123_InitialMigration.Designer.cs" />
@@ -38,5 +40,13 @@
     <Compile Remove="Migrations\20191128193527_InitialMigration33.cs" />
     <Compile Remove="Migrations\20191128203031_addUser.cs" />
     <Compile Remove="Migrations\20191128203031_addUser.Designer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SmsSender\SmsSender.csproj">
+      <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.csproj">
+      <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
+    </ProjectReference>
   </ItemGroup>
 </Project>

@@ -1,9 +1,12 @@
 using System.Collections.Generic;
+using System.Text;
+using clearlyApi.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -22,10 +25,10 @@ namespace clearlyApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddBuisnessServices();
 
             services.AddControllers();
             services.AddDbContext<ApplicationContext>();
-
 
             services.AddCors();
             services.AddMvc(option => option.EnableEndpointRouting = false);
@@ -93,6 +96,18 @@ namespace clearlyApi
             });
 
             app.UseMvc();
+        }
+    }
+
+    public class AuthOptions
+    {
+        public const string ISSUER = "clearly-aut-srever"; // издатель токена
+        public const string AUDIENCE = "http://localhost:5001/"; // потребитель токена
+        const string KEY = "jd645JHkdH348t2dsf3ujd4wk";   // ключ для шифрации
+        public const int LIFETIME = 120000; // время жизни токена - 120 минут
+        public static SymmetricSecurityKey GetSymmetricSecurityKey()
+        {
+            return new SymmetricSecurityKey(Encoding.ASCII.GetBytes(KEY));
         }
     }
 }

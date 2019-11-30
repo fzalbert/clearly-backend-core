@@ -8,7 +8,8 @@ namespace clearlyApi.Dto.Request
         [Required]
         public string Login { get; set; }
 
-        [Required]
         public Enums.LoginType Type { get; set; }
+
+        public string Code { get; set; }
     }
 }
