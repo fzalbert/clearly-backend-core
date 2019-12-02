@@ -144,5 +144,33 @@ namespace clearlyApi.Controllers
             return Json(new BaseResponse());
         }
 
+        [Authorize]
+        [HttpGet("setAge")]
+        public IActionResult setAge([FromQuery(Name = "age")] string ageInterval)
+        {
+            var user = dbContext.Users
+                .Include(u => u.Person)
+                .FirstOrDefault(x => x.Login == User.Identity.Name);
+
+            if (user == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "User not found"
+                });
+
+            if(String.IsNullOrEmpty(ageInterval))
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "возраст не задан"
+                });
+
+            user.Person.Age = ageInterval;
+
+            return Json(new BaseResponse());
+
+        }
+
     }
 }
