@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.OpenApi" Version="1.1.4" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Entities\" />
@@ -26,6 +27,7 @@
     <Folder Include="Dto\Request\" />
     <Folder Include="Services\" />
     <Folder Include="Services\Auth\" />
+    <Folder Include="Services\WebSocket\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Migrations\20191128191123_InitialMigration.Designer.cs" />
@@ -46,9 +48,6 @@
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
-      <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
-    </ProjectReference>
-    <ProjectReference Include="..\WebSocketHelper\WebSocketHelper.csproj">
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>
   </ItemGroup>

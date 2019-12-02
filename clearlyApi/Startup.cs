@@ -28,6 +28,7 @@ namespace clearlyApi
             services.AddControllers();
             services.AddDbContext<ApplicationContext>();
 
+            
             services.AddCors();
             services.AddMvc(option => option.EnableEndpointRouting = false);
 
