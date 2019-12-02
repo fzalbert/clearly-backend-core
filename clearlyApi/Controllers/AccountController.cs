@@ -10,7 +10,9 @@ using clearlyApi.Dto.Response;
 using clearlyApi.Entities;
 using clearlyApi.Enums;
 using clearlyApi.Services.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SmsSender;
 using Utils;
@@ -115,6 +117,27 @@ namespace clearlyApi.Controllers
             var token = GetSecurityToken(identity, false);
 
             return Json(new SignInResponse() { SecurityToken = token, Id = user.Id });
+        }
+
+        [Authorize]
+        [HttpGet("sex")]
+        public IActionResult SetSex([FromQuery(Name = "type")]Sex sexType)
+        {
+            var user = dbContext.Users
+                .Include(x => x.Person)
+                .FirstOrDefault(x => x.Login == User.Identity.Name);
+
+            if (user == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "User not found"
+                });
+
+            user.Person.Sex = sexType;
+            dbContext.SaveChanges();
+
+            return Json(new BaseResponse());
         }
 
         private ClaimsIdentity GetIdentity(User user)

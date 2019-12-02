@@ -17,7 +17,7 @@ namespace clearlyApi.Entities
         [DefaultValue(0)]
         public Sex Sex { get; set; }
 
-        public int Age { get; set; }
+        public string Age { get; set; }
 
         public int UserId { get; set; }
 

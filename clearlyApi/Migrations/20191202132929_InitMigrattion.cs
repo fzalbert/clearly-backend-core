@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace clearlyApi.Migrations
 {
-    public partial class Init : Migration
+    public partial class InitMigrattion : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -30,7 +30,8 @@ namespace clearlyApi.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Login = table.Column<string>(nullable: true),
-                    Type = table.Column<int>(nullable: false),
+                    LoginType = table.Column<int>(nullable: false),
+                    UserType = table.Column<int>(nullable: false),
                     IsActive = table.Column<bool>(nullable: false),
                     Created = table.Column<DateTime>(nullable: false)
                 },

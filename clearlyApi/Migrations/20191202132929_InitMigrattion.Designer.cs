@@ -9,8 +9,8 @@ using clearlyApi;
 namespace clearlyApi.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20191129114452_Init")]
-    partial class Init
+    [Migration("20191202132929_InitMigrattion")]
+    partial class InitMigrattion
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -220,7 +220,10 @@ namespace clearlyApi.Migrations
                     b.Property<string>("Login")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
-                    b.Property<int>("Type")
+                    b.Property<int>("LoginType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserType")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

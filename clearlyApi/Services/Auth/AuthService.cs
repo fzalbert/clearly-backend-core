@@ -19,7 +19,7 @@ namespace clearlyApi.Services.Auth
 
         public BaseResponse Auth(User user)
         { 
-            var loginType = user.Type;
+            var loginType = user.LoginType;
 
             Random rnd = new Random();
             int randomNumber = rnd.Next(100000, 999999);
@@ -75,7 +75,7 @@ namespace clearlyApi.Services.Auth
 
             var user = new User()
             {
-                Type = loginType,
+                LoginType = loginType,
                 Login = login,
                 Created = DateTime.UtcNow
             };

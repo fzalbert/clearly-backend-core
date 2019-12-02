@@ -10,7 +10,11 @@ namespace clearlyApi.Entities
     {
         public string Login { get; set; }
 
-        public LoginType Type { get; set; }
+        public LoginType LoginType { get; set; }
+
+        [Required]
+        [DefaultValue(UserType.User)]
+        public UserType UserType { get; set; }
 
         [DefaultValue(false)]
         public Boolean IsActive { get; set; }
