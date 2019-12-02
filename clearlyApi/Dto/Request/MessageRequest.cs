@@ -7,5 +7,7 @@ namespace clearlyApi.Dto.Request
     {
         [Required]
         public string Text { get; set; }
+
+        public int UserId { get; set; }
     }
 }

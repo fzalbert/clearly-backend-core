@@ -23,19 +23,27 @@ namespace clearlyApi.Services.Auth
 
             Random rnd = new Random();
             int randomNumber = rnd.Next(100000, 999999);
-
-            switch (loginType)
+            try
             {
-                case LoginType.Email:
-                    var toEmail = new String[1];
-                    toEmail[0] = user.Login;
-                    smsProvider.SendByEmail(toEmail, randomNumber.ToString());
-                    break;
-                case LoginType.Phone:
-                    smsProvider.Send(null, user.Login, randomNumber.ToString());
-                    break;
+                switch (loginType)
+                {
+                    case LoginType.Email:
+                        var toEmail = new String[1];
+                        toEmail[0] = user.Login;
+                        smsProvider.SendByEmail(toEmail, randomNumber.ToString());
+                        break;
+                    case LoginType.Phone:
+                        smsProvider.Send(null, user.Login, randomNumber.ToString());
+                        break;
+                }
             }
+            catch (System.Exception ex)
+            {
+                if (ex.InnerException is System.IO.IOException)
+                {
 
+                }
+            }
             ActivationCode code = new ActivationCode
             {
                 User = user,
@@ -70,7 +78,10 @@ namespace clearlyApi.Services.Auth
             }
             catch(System.Exception ex)
             {
+                if(ex.InnerException is System.IO.IOException)
+                {
 
+                }
             }
 
             var user = new User()

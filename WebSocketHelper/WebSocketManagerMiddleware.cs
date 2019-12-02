@@ -24,7 +24,7 @@ namespace WebSocketHelper
         {
             if (!context.WebSockets.IsWebSocketRequest)
                 return;
-
+            
             var socket = await context.WebSockets.AcceptWebSocketAsync();
             await _webSocketHandler.OnConnected(socket);
 

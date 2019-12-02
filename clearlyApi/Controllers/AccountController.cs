@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using SmsSender;
 using Utils;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -121,8 +120,15 @@ namespace clearlyApi.Controllers
 
         [Authorize]
         [HttpGet("sex")]
-        public IActionResult SetSex([FromQuery(Name = "type")]Sex sexType)
+        public IActionResult SetSex([FromQuery(Name = "type")]SexType sexType)
         {
+            if(sexType == SexType.Not)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "type не должен быть 0"
+                });
+
             var user = dbContext.Users
                 .Include(x => x.Person)
                 .FirstOrDefault(x => x.Login == User.Identity.Name);

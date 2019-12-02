@@ -13,9 +13,7 @@ namespace clearlyApi.Entities
 
         public string Email { get; set; }
 
-        [Required]
-        [DefaultValue(0)]
-        public Sex Sex { get; set; }
+        public SexType Sex { get; set; }
 
         public string Age { get; set; }
 

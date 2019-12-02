@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text;
 using clearlyApi.Services;
+using clearlyApi.Services.Chat;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -23,13 +25,30 @@ namespace clearlyApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvc(option => option.EnableEndpointRouting = false);
             services.AddBuisnessServices();
 
-            services.AddControllers();
             services.AddDbContext<ApplicationContext>();
-
             services.AddCors();
-            services.AddMvc(option => option.EnableEndpointRouting = false);
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.RequireHttpsMetadata = false;
+                    options.SaveToken = true;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = AuthOptions.ISSUER,
+                        ValidateAudience = true,
+                        ValidAudience = AuthOptions.AUDIENCE,
+                        RequireExpirationTime = true,
+                        ValidateLifetime = true,
+                        IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
+                        ValidateIssuerSigningKey = true
+                    };
+                });
+
+            services.AddControllers();
 
             services.AddSwaggerGen(c =>
             {
@@ -42,7 +61,7 @@ namespace clearlyApi
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer"
+                    Scheme = "bearer"
                 });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement()
@@ -64,6 +83,8 @@ namespace clearlyApi
                     }
                 });
             });
+
+            services.AddWebSocketManager();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,7 +95,15 @@ namespace clearlyApi
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseRouting();
+
+            app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
 
             app.UseHttpsRedirection();
 
@@ -86,18 +115,17 @@ namespace clearlyApi
                 c.RoutePrefix = string.Empty;
             });
 
-            app.UseRouting();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-
             app.UseMvc();
+
+            var serviceScopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
+            var serviceProvider = serviceScopeFactory.CreateScope().ServiceProvider;
+
+            app.UseWebSockets();
+            app.MapWebSocketManager("/ws", serviceProvider.GetService<ChatMessageHandler>());
         }
     }
 
-    public class AuthOptions
+    public static class AuthOptions
     {
         public const string ISSUER = "clearly-aut-srever"; // издатель токена
         public const string AUDIENCE = "http://localhost:5001/"; // потребитель токена

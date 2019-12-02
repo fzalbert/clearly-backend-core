@@ -1,7 +1,7 @@
 ﻿using System;
 namespace clearlyApi.Enums
 {
-    public enum Sex
+    public enum SexType
     {
         Not = 0,
         Male = 1,

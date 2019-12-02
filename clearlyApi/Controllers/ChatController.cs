@@ -146,7 +146,7 @@ namespace clearlyApi.Controllers
 
         [Authorize]
         [HttpGet("setAge")]
-        public IActionResult setAge([FromQuery(Name = "age")] string ageInterval)
+        public IActionResult SetAge([FromQuery(Name = "age")] string ageInterval)
         {
             var user = dbContext.Users
                 .Include(u => u.Person)

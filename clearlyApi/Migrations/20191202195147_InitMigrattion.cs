@@ -149,7 +149,7 @@ namespace clearlyApi.Migrations
                     Phone = table.Column<string>(nullable: true),
                     Email = table.Column<string>(nullable: true),
                     Sex = table.Column<int>(nullable: false),
-                    Age = table.Column<int>(nullable: false),
+                    Age = table.Column<string>(nullable: true),
                     UserId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
