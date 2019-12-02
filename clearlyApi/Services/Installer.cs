@@ -1,4 +1,5 @@
-﻿using clearlyApi.Services.Auth;
+﻿using System;
+using clearlyApi.Services.Auth;
 using Microsoft.Extensions.DependencyInjection;
 using SmsSender;
 
@@ -12,8 +13,5 @@ namespace clearlyApi.Services
                 .AddScoped<ISmsProvider, SmsRuProvider>()
                 .AddScoped<IAuthService, AuthService>();
         }
-
-    
-
     }
 }
