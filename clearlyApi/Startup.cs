@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
 using clearlyApi.Services;
-using clearlyApi.Services.WebSocket;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +28,7 @@ namespace clearlyApi
             services.AddControllers();
             services.AddDbContext<ApplicationContext>();
 
+            
             services.AddCors();
             services.AddMvc(option => option.EnableEndpointRouting = false);
 
@@ -65,8 +65,6 @@ namespace clearlyApi
                     }
                 });
             });
-
-            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -94,8 +92,6 @@ namespace clearlyApi
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-
-                endpoints.MapHub<ChatHub>("/chat");
             });
 
             app.UseMvc();
