@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using clearlyApi.Dto.Request;
 using clearlyApi.Dto.Response;
 using clearlyApi.Entities;
+using clearlyApi.Services.Chat;
+using clearlyApi.Services.Chat.Manager;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,25 +22,20 @@ namespace clearlyApi.Controllers
     public class ChatController : Controller
     {
 
-        private ApplicationContext dbContext { get; set; }
+        private ApplicationContext _dbContext { get; set; }
+        private WebSocketHandler _webSocketHandler { get; set; }
 
-        public ChatController(ApplicationContext dbContext)
+        public ChatController(ApplicationContext dbContext, WebSocketHandler webSocketHandler)
         {
-            this.dbContext = dbContext;
-        }
-
-        // GET: api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
+            this._dbContext = dbContext;
+            _webSocketHandler = webSocketHandler;
         }
 
         [Authorize]
         [HttpPost("photo")]
         public async Task<IActionResult> SendPhoto(IFormFile file)
         {
-            var user = dbContext.Users
+            var user = _dbContext.Users
                 .FirstOrDefault(x => x.Login == User.Identity.Name);
 
             if (user == null)
@@ -74,20 +72,20 @@ namespace clearlyApi.Controllers
 
             };
 
-            dbContext.Messages.Add(message);
-            dbContext.SaveChanges();
+            _dbContext.Messages.Add(message);
+            _dbContext.SaveChanges();
 
             return Json(new BaseResponse());
         }
 
         [Authorize]
-        [HttpGet("messages")]
+        [HttpGet("getMessages")]
         public IActionResult GetMessages(
             [FromQuery(Name = "pageNumber")] int pageNumber,
             [FromQuery(Name = "pageSize")] int pageSize
             )
         {
-            var user = dbContext.Users
+            var user = _dbContext.Users
                 .Include(u => u.Person)
                 .FirstOrDefault(x => x.Login == User.Identity.Name);
 
@@ -98,7 +96,7 @@ namespace clearlyApi.Controllers
                     Message = "User not found"
                 });
 
-            var messages = dbContext.Messages
+            var messages = _dbContext.Messages
                 .Where(m => m.UserId == user.Id)
                 .Skip(pageNumber * pageSize)
                 .Take(pageSize)
@@ -117,7 +115,7 @@ namespace clearlyApi.Controllers
         [HttpPost("message")]
         public IActionResult SendMessage([FromBody] MessageRequest request)
         {
-            var user = dbContext.Users
+            var user = _dbContext.Users
                 .FirstOrDefault(x => x.Login == User.Identity.Name);
 
             if (user == null)
@@ -135,18 +133,29 @@ namespace clearlyApi.Controllers
             {
                 Type = Enums.MessageType.Text,
                 Content = request.Text,
-                //UserId = user.Id
             };
             if (user.UserType == Enums.UserType.Admin)
             {
-                var toUser = dbContext.Users
-                .FirstOrDefault(x => x.Login == User.Identity.Name);
+                var toUser = _dbContext.Users
+                .FirstOrDefault(x => x.Login == request.ToUserLogin);
+
+                if(toUser == null)
+                    return Json(new BaseResponse
+                    {
+                        Status = false,
+                        Message = "User not found"
+                    });
+
+                message.AdminId = user.Id;
+                message.UserId = toUser.Id;
             }
             else
                 message.UserId = user.Id;
 
-            dbContext.Messages.Add(message);
-            dbContext.SaveChanges();
+            _dbContext.Messages.Add(message);
+            _dbContext.SaveChanges();
+
+            SendMessageSocket(user.Login, new MessageDTO(message));
 
             return Json(new BaseResponse());
         }
@@ -155,7 +164,7 @@ namespace clearlyApi.Controllers
         [HttpGet("setAge")]
         public IActionResult SetAge([FromQuery(Name = "age")] string ageInterval)
         {
-            var user = dbContext.Users
+            var user = _dbContext.Users
                 .Include(u => u.Person)
                 .FirstOrDefault(x => x.Login == User.Identity.Name);
 
@@ -179,5 +188,12 @@ namespace clearlyApi.Controllers
 
         }
 
+        private async Task SendMessageSocket(string login, MessageDTO message)
+        {
+            await _webSocketHandler.SendMessageAsync(
+                    login,
+                    JsonSerializer.Serialize(message)
+                    );
+        }
     }
 }

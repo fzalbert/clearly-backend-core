@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using clearlyApi.Services;
+using clearlyApi.Services.Chat;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -103,7 +104,8 @@ namespace clearlyApi
                 });
             });
 
-            
+            services.AddWebSocketManager();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -140,6 +142,7 @@ namespace clearlyApi
             var serviceProvider = serviceScopeFactory.CreateScope().ServiceProvider;
 
             app.UseWebSockets();
+            app.MapWebSocketManager("/ws", serviceProvider.GetService<ChatMessageHandler>());
         }
     }
 

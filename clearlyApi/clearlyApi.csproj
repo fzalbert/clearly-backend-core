@@ -28,6 +28,7 @@
     <Folder Include="Services\" />
     <Folder Include="Services\Auth\" />
     <Folder Include="Services\Chat\" />
+    <Folder Include="Services\Chat\Manager\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Migrations\20191128191123_InitialMigration.Designer.cs" />

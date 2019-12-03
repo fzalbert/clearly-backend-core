@@ -11,6 +11,6 @@ namespace clearlyApi.Dto.Request
         /// <summary>
         /// if admin
         /// </summary>
-        public int UserId { get; set; }
+        public string ToUserLogin { get; set; }
     }
 }
