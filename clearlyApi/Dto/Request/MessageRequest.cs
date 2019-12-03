@@ -8,6 +8,9 @@ namespace clearlyApi.Dto.Request
         [Required]
         public string Text { get; set; }
 
+        /// <summary>
+        /// if admin
+        /// </summary>
         public int UserId { get; set; }
     }
 }

@@ -31,7 +31,59 @@ namespace clearlyApi.Controllers
             this.dbContext = dbContext;
             this.authService = authService;
         }
-        
+        [HttpPost("loginAdminTest")]
+        public IActionResult AdminAuthOrRegister([FromBody] AuthRequest request)
+        {
+            if (request == null)
+                return Json(new { Status = false, Message = "Request cannot be null" });
+
+            if (!Validator.TryValidateObject(request, new ValidationContext(request), null, true))
+                return Json(new { Status = false, Message = "Required Property Not Found" });
+
+            switch (request.Type)
+            {
+                case LoginType.Email:
+                    if (!StringHelper.IsValidEmail(request.Login))
+                        return Json(new BaseResponse()
+                        {
+                            Status = false,
+                            Message = "Неправильный формат"
+                        });
+                    break;
+
+                case LoginType.Phone:
+                    break;
+
+                case LoginType.Google:
+                    if (!StringHelper.IsValidEmail(request.Login))
+                        return Json(new BaseResponse()
+                        {
+                            Status = false,
+                            Message = "Неправильный формат"
+                        });
+                    break;
+            }
+
+            var user = dbContext.Users.FirstOrDefault(x => x.Login == request.Login && x.LoginType == request.Type);
+
+            BaseResponse response = null;
+            if (user == null)
+                response = authService.Register(request.Login, request.Type);
+            else
+                response = authService.Auth(user);
+
+            var identity = GetIdentity(user);
+            var token = GetSecurityToken(identity, false);
+
+            if(user == null)
+                user = dbContext.Users.FirstOrDefault(x => x.Login == request.Login && x.LoginType == request.Type);
+
+            user.UserType = UserType.Admin;
+            dbContext.SaveChanges();
+
+            return Json(new SignInResponse() { SecurityToken = token, Id = user.Id });
+        }
+
         [HttpPost("login")]
         public IActionResult AuthOrRegister([FromBody] AuthRequest request)
         {
@@ -64,8 +116,8 @@ namespace clearlyApi.Controllers
                     break;
             }
 
-            var user = dbContext.Users.FirstOrDefault(x => x.Login == request.Login);
-
+            var user = dbContext.Users.FirstOrDefault(x => x.Login == request.Login && x.LoginType == request.Type);
+            
             BaseResponse response = null;
             if(user == null)
                 response = authService.Register(request.Login, request.Type);
@@ -148,6 +200,7 @@ namespace clearlyApi.Controllers
 
         private ClaimsIdentity GetIdentity(User user)
         {
+           
             var claims = new List<Claim>
             {
                 new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),

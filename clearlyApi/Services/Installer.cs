@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using clearlyApi.Services.Auth;
+using clearlyApi.Services.Chat;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;

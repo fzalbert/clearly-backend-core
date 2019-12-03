@@ -82,7 +82,7 @@ namespace clearlyApi.Controllers
 
         [Authorize]
         [HttpGet("messages")]
-        public IActionResult getMessages(
+        public IActionResult GetMessages(
             [FromQuery(Name = "pageNumber")] int pageNumber,
             [FromQuery(Name = "pageSize")] int pageSize
             )
@@ -130,13 +130,20 @@ namespace clearlyApi.Controllers
             if (request == null)
                 return Json(new { Status = false, Message = "Request cannot be null" });
 
+
             var message = new Message
             {
                 Type = Enums.MessageType.Text,
                 Content = request.Text,
-                UserId = user.Id
-
+                //UserId = user.Id
             };
+            if (user.UserType == Enums.UserType.Admin)
+            {
+                var toUser = dbContext.Users
+                .FirstOrDefault(x => x.Login == User.Identity.Name);
+            }
+            else
+                message.UserId = user.Id;
 
             dbContext.Messages.Add(message);
             dbContext.SaveChanges();
