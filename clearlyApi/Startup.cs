@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using clearlyApi.Services;
 using clearlyApi.Services.Chat;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -46,7 +48,29 @@ namespace clearlyApi
                         IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
                         ValidateIssuerSigningKey = true
                     };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+
+                            // If the request is for our hub...
+                            var path = context.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken) &&
+                                (path.StartsWithSegments("/hubs/chat")))
+                            {
+                                // Read the token out of the query string
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
+            
+            services.AddSignalR();
+
+            services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 
             services.AddControllers();
 
@@ -84,7 +108,7 @@ namespace clearlyApi
                 });
             });
 
-            services.AddWebSocketManager();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -103,6 +127,7 @@ namespace clearlyApi
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<ChatHub>("/ws");
             });
 
             app.UseHttpsRedirection();
@@ -121,7 +146,6 @@ namespace clearlyApi
             var serviceProvider = serviceScopeFactory.CreateScope().ServiceProvider;
 
             app.UseWebSockets();
-            app.MapWebSocketManager("/ws", serviceProvider.GetService<ChatMessageHandler>());
         }
     }
 

@@ -42,6 +42,10 @@ namespace clearlyApi
                     .HasMany(u => u.AdminMessages)
                     .WithOne(m => m.Admin)
                     .HasForeignKey(m => m.AdminId);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Login)
+                .IsUnique();
         }
     }
 }

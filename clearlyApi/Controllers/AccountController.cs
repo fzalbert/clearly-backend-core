@@ -72,14 +72,13 @@ namespace clearlyApi.Controllers
             else
                 response = authService.Auth(user);
 
-            var identity = GetIdentity(user);
-            var token = GetSecurityToken(identity, false);
-
             if(user == null)
                 user = dbContext.Users.FirstOrDefault(x => x.Login == request.Login && x.LoginType == request.Type);
 
             user.UserType = UserType.Admin;
             dbContext.SaveChanges();
+
+            var token = authService.CreateToken(user);
 
             return Json(new SignInResponse() { SecurityToken = token, Id = user.Id });
         }
@@ -152,7 +151,10 @@ namespace clearlyApi.Controllers
                     Message = "Пользователь не найден"
                 });
 
-            var activationCode = dbContext.ActivationCodes.FirstOrDefault(x => x.Code == request.Code && x.UserId == user.Id);
+
+            var activationCode = dbContext.ActivationCodes
+                .FirstOrDefault(x => x.Code == request.Code && x.UserId == user.Id);
+
             if(activationCode == null)
                 return Json(new BaseResponse
                 {
@@ -160,12 +162,12 @@ namespace clearlyApi.Controllers
                     Message = "Неверный код активации"
                 });
 
+
             user.IsActive = true;
             dbContext.Users.Update(user);
             dbContext.SaveChanges();
 
-            var identity = GetIdentity(user);
-            var token = GetSecurityToken(identity, false);
+            var token = authService.CreateToken(user);
 
             return Json(new SignInResponse() { SecurityToken = token, Id = user.Id });
         }
@@ -196,54 +198,6 @@ namespace clearlyApi.Controllers
             dbContext.SaveChanges();
 
             return Json(new BaseResponse());
-        }
-
-        private ClaimsIdentity GetIdentity(User user)
-        {
-           
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, "user")
-            };
-
-            var claimsIdentity = new ClaimsIdentity(
-                claims, "Token", ClaimsIdentity.DefaultNameClaimType,
-                ClaimsIdentity.DefaultRoleClaimType);
-
-            return claimsIdentity;
-        }
-
-        private SecurityTokenViewModel GetSecurityToken(ClaimsIdentity identity, bool remember)
-        {
-            var now = DateTime.UtcNow;
-            var expires = now;
-
-            if (remember)
-                expires = DateTime.MaxValue;
-            else
-                expires = now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME));
-
-            var jwt = new JwtSecurityToken(
-                    issuer: AuthOptions.ISSUER,
-                    audience: AuthOptions.AUDIENCE,
-                    notBefore: now,
-                    claims: identity.Claims,
-                    expires: expires,
-                    signingCredentials: new SigningCredentials(
-                        AuthOptions.GetSymmetricSecurityKey(),
-                        SecurityAlgorithms.HmacSha256)
-                    );
-
-            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-
-            var token = new SecurityTokenViewModel()
-            {
-                Token = encodedJwt,
-                ExpireDate = expires
-            };
-
-            return token;
         }
     }
 }

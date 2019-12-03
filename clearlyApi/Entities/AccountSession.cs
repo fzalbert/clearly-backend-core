@@ -12,5 +12,8 @@ namespace clearlyApi.Entities
 
         [DataType(DataType.DateTime)]
         public DateTime Created { get; set; }
+
+        [DataType(DataType.DateTime)]
+        public DateTime ExpiredAt { get; set; }
     }
 }

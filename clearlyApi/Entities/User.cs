@@ -8,6 +8,7 @@ namespace clearlyApi.Entities
 {
     public class User : PersistantObject
     {
+        [Required]
         public string Login { get; set; }
 
         public LoginType LoginType { get; set; }
