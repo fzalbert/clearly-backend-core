@@ -2,11 +2,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using clearlyApi.Services;
-using clearlyApi.Services.Chat;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -68,9 +66,6 @@ namespace clearlyApi
                     };
                 });
             
-            services.AddSignalR();
-
-            services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 
             services.AddControllers();
 
@@ -127,7 +122,6 @@ namespace clearlyApi
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapHub<ChatHub>("/ws");
             });
 
             app.UseHttpsRedirection();
