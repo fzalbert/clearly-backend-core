@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 using clearlyApi.Dto.Request;
 using clearlyApi.Dto.Response;
 using clearlyApi.Entities;
+using clearlyApi.Enums;
 using clearlyApi.Services.Chat;
 using clearlyApi.Services.Chat.Manager;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Utils;
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -32,7 +34,7 @@ namespace clearlyApi.Controllers
         }
 
         [Authorize]
-        [HttpPost("photo")]
+        [HttpPost("sendPhoto")]
         public async Task<IActionResult> SendPhoto(IFormFile file)
         {
             var user = _dbContext.Users
@@ -74,6 +76,80 @@ namespace clearlyApi.Controllers
 
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
+
+            return Json(new BaseResponse());
+        }
+
+        [Authorize]
+        [HttpPost("adminSendPhoto/{toLogin}")]
+        public async Task<IActionResult> AdminSendPhoto(IFormFile file, string toLogin)
+        {
+            var user = _dbContext.Users
+                .FirstOrDefault(x => x.Login == User.Identity.Name);
+
+            if (user == null || user.UserType != Enums.UserType.Admin)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "User not found"
+                });
+
+            var toUser = _dbContext.Users
+                .FirstOrDefault(x => x.Login == toLogin);
+            if(toUser == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "To User not found"
+                });
+
+
+            if (file == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "File empty"
+                });
+
+            string fileName = $"{CryptHelper.CreateMD5(DateTime.Now.ToString())}{Path.GetExtension(file.FileName)}";
+            string path = $"{System.IO.Directory.GetCurrentDirectory()}\\Files\\";
+
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            using (var fileStream = new FileStream(path + fileName, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+
+            var message = new Message
+            {
+                Type = Enums.MessageType.Photo,
+                Content = fileName,
+                Created = DateTime.UtcNow,
+                UserId = toUser.Id,
+                AdminId = user.Id,
+                IsFromAdmin = true
+            };
+
+            _dbContext.Messages.Add(message);
+            _dbContext.SaveChanges();
+
+            SendMessageSocket(toUser.Login, new MessageDTO<string>(message) { Data = fileName});
+
+
+            var agePickerMessage = new Message
+            {
+                Type = Enums.MessageType.AgePicker,
+                Created = DateTime.UtcNow,
+                UserId = toUser.Id,
+                AdminId = user.Id,
+                IsFromAdmin = true
+            };
+            _dbContext.Messages.Add(agePickerMessage);
+            _dbContext.SaveChanges();
+
+            SendMessageSocket(toUser.Login, new MessageDTO<string>(agePickerMessage));
 
             return Json(new BaseResponse());
         }
@@ -155,7 +231,7 @@ namespace clearlyApi.Controllers
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
 
-            SendMessageSocket(user.Login, new MessageDTO(message));
+            SendMessageSocket(user.Login, new MessageDTO<string>(message) { Data = message.Content});
 
             return Json(new BaseResponse());
         }
@@ -188,11 +264,74 @@ namespace clearlyApi.Controllers
 
         }
 
-        private async Task SendMessageSocket(string login, MessageDTO message)
+        [Authorize]
+        [HttpGet("setPayType/{type}")]
+        public IActionResult SetPayType(PayType type)
+        {
+            var user = _dbContext.Users
+               .Include(u => u.Person)
+               .FirstOrDefault(x => x.Login == User.Identity.Name);
+
+            if (user == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "User not found"
+                });
+
+            var orderExpired = _dbContext.Orders.FirstOrDefault(x => x.UserId == user.Id && x.Status == OrderStatus.Request);
+
+            _dbContext.Orders.Remove(orderExpired);
+
+            var order = new Order()
+            {
+                UserId = user.Id,
+                Created = DateTime.UtcNow,
+                Status = type == PayType.Cash ? OrderStatus.Cash : OrderStatus.Request
+            };
+
+            _dbContext.Orders.Add(order);
+
+            _dbContext.SaveChanges();
+
+            var lastMessage = _dbContext.Messages
+                .Where(x => x.UserId == user.Id)
+                .OrderByDescending(m => m.Created)
+                .Include(x => x.Admin)
+                .FirstOrDefault();
+
+            var packages = _dbContext.Packages.Take(3).ToList();
+
+            var message = new Message
+            {
+                Type = Enums.MessageType.PackagesPicker,
+                Content = "",
+                IsFromAdmin = true,
+                AdminId = lastMessage.AdminId
+            };
+
+            _dbContext.Messages.Add(message);
+            _dbContext.SaveChanges();
+
+            var messageDTO = new MessageDTO<PackagesList>(message)
+            {
+                Data = new PackagesList()
+                {
+                    OrderId = order.Id,
+                    Packages = packages.Select(x => new PackageDTOResponse(x)).ToList()
+                }
+            };
+
+            SendMessageSocket(lastMessage.Admin.Login, messageDTO);
+
+            return Json(new BaseResponse());
+        }
+
+        private async Task SendMessageSocket<T>(string login, MessageDTO<T> message)
         {
             await _webSocketHandler.SendMessageAsync(
                     login,
-                    JsonSerializer.Serialize(message)
+                    JsonConvert.SerializeObject(message)
                     );
         }
     }

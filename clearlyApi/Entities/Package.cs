@@ -14,6 +14,5 @@ namespace clearlyApi.Entities
         public int Price { get; set; }
 
         public PackageType Type { get; set; }
-
     }
 }

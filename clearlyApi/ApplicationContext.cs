@@ -46,6 +46,8 @@ namespace clearlyApi
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Login)
                 .IsUnique();
+
+
         }
     }
 }

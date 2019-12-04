@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace clearlyApi.Entities
@@ -12,10 +14,15 @@ namespace clearlyApi.Entities
         [DataType(DataType.DateTime)]
         public DateTime Created { get; set; }
 
+        [DefaultValue(false)]
+        public bool IsFromAdmin { get; set; }
+
         public int UserId { get; set; }
         public User User { get; set; }
 
-        public int? AdminId { get; set; }
+        public int AdminId { get; set; }
         public User Admin { get; set; }
+
+        public List<Package> Packages { get; set; }
     }
 }

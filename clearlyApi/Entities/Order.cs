@@ -9,7 +9,7 @@ namespace clearlyApi.Entities
         public int UserId { get; set; }
         public User User { get; set; }
 
-        public int PackageId { get; set; }
+        public int? PackageId { get; set; }
         public Package Package { get; set; }
 
         [DataType(DataType.DateTime)]
