@@ -29,7 +29,7 @@ namespace SmsSender
 
         String login = "";                             // Логин для доступа к SMS.RU
         String password = ""; // Пароль для доступа к SMS.RU 
-        String apiId = "AD82A21F-BAB6-D29C-8EFA-26033F0B0EE3";
+        String apiId = "45115176-B603-1809-C481-6F4E3A473F57";
         String partnerId = "";                     // Если вы участвуете в партнерской программе, укажите этот параметр в запросе
         String SmsRuEmail = "";             // Ваш уникальный адрес (для отправки СМС по email)
         String email = "";                                   // Ваш email адрес для отправки
