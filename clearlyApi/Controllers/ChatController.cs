@@ -1,23 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using clearlyApi.Dto.Request;
 using clearlyApi.Dto.Response;
 using clearlyApi.Entities;
 using clearlyApi.Enums;
 using clearlyApi.Services.Chat;
-using clearlyApi.Services.Chat.Manager;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Utils;
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
+// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 namespace clearlyApi.Controllers
 {
     [Route("api/[controller]")]
@@ -25,9 +23,9 @@ namespace clearlyApi.Controllers
     {
 
         private ApplicationContext _dbContext { get; set; }
-        private WebSocketHandler _webSocketHandler { get; set; }
+        private ChatMessageHandler _webSocketHandler { get; set; }
 
-        public ChatController(ApplicationContext dbContext, WebSocketHandler webSocketHandler)
+        public ChatController(ApplicationContext dbContext, ChatMessageHandler webSocketHandler)
         {
             this._dbContext = dbContext;
             _webSocketHandler = webSocketHandler;
@@ -54,8 +52,18 @@ namespace clearlyApi.Controllers
                     Message = "File empty"
                 });
 
+            var admin = _dbContext.Users
+               .FirstOrDefault(x => x.UserType == UserType.Admin);
+
+            if (admin == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "Admin not found"
+                });
+
             string fileName = $"{CryptHelper.CreateMD5(DateTime.Now.ToString())}{Path.GetExtension(file.FileName)}";
-            string path = $"{System.IO.Directory.GetCurrentDirectory()}\\Files\\";
+            string path = $"{Directory.GetCurrentDirectory()}/Files/";
 
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
@@ -67,15 +75,18 @@ namespace clearlyApi.Controllers
 
             var message = new Message
             {
-                Type = Enums.MessageType.Photo,
+                Type = MessageType.Photo,
                 Content = fileName,
                 Created = DateTime.UtcNow,
-                UserId = user.Id
-
+                UserId = user.Id,
+                AdminId = admin.Id,
+                IsFromAdmin = false
             };
 
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
+
+            SendMessageSocket(user.Login, new MessageDTO<string>(message) { Data = fileName });
 
             return Json(new BaseResponse());
         }
@@ -207,15 +218,18 @@ namespace clearlyApi.Controllers
 
             var message = new Message
             {
-                Type = Enums.MessageType.Text,
+                Type = MessageType.Text,
                 Content = request.Text,
+                Created = DateTime.UtcNow
             };
-            if (user.UserType == Enums.UserType.Admin)
+            string receiverLogin = "";
+
+            if (user.UserType == UserType.Admin)
             {
                 var toUser = _dbContext.Users
                 .FirstOrDefault(x => x.Login == request.ToUserLogin);
 
-                if(toUser == null)
+                if (toUser == null)
                     return Json(new BaseResponse
                     {
                         Status = false,
@@ -224,14 +238,31 @@ namespace clearlyApi.Controllers
 
                 message.AdminId = user.Id;
                 message.UserId = toUser.Id;
+                message.IsFromAdmin = true;
+
+                receiverLogin = toUser.Login;
             }
             else
+            {
+                var admin = _dbContext.Users
+                    .FirstOrDefault(x => x.UserType == UserType.Admin);
+
+                if (admin == null)
+                    return Json(new BaseResponse
+                    {
+                        Status = false,
+                        Message = "Admin not found"
+                    });
+
                 message.UserId = user.Id;
+                message.AdminId = admin.Id;
+                receiverLogin = admin.Login;
+            }
 
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
 
-            SendMessageSocket(user.Login, new MessageDTO<string>(message) { Data = message.Content});
+            SendMessageSocket(receiverLogin, new MessageDTO<string>(message) { Data = message.Content});
 
             return Json(new BaseResponse());
         }
@@ -251,6 +282,17 @@ namespace clearlyApi.Controllers
                     Message = "User not found"
                 });
 
+            var lastMessage = _dbContext.Messages
+                .Where(x => x.UserId == user.Id)
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefault();
+            if (lastMessage == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "Отправьте фото"
+                });
+
             if(String.IsNullOrEmpty(ageInterval))
                 return Json(new BaseResponse
                 {
@@ -260,8 +302,22 @@ namespace clearlyApi.Controllers
 
             user.Person.Age = ageInterval;
 
-            return Json(new BaseResponse());
+            var message = new Message
+            {
+                Type = MessageType.PaymentMethodPicker,
+                UserId = user.Id,
+                AdminId = lastMessage.AdminId,
+                Created = DateTime.UtcNow
+            };
 
+            _dbContext.Messages.Add(message);
+
+            SendMessageSocket(user.Login, new MessageDTO<string>(message) {  });
+
+
+            _dbContext.SaveChanges();
+
+            return Json(new BaseResponse());
         }
 
         [Authorize]
@@ -279,10 +335,12 @@ namespace clearlyApi.Controllers
                     Message = "User not found"
                 });
 
-            var orderExpired = _dbContext.Orders.FirstOrDefault(x => x.UserId == user.Id && x.Status == OrderStatus.Request);
+            var orderExpired = _dbContext.Orders
+                .FirstOrDefault(x => x.UserId == user.Id && x.Status == OrderStatus.Request);
 
-            _dbContext.Orders.Remove(orderExpired);
-
+            if(orderExpired != null)
+                _dbContext.Orders.Remove(orderExpired);
+    
             var order = new Order()
             {
                 UserId = user.Id,
@@ -296,24 +354,28 @@ namespace clearlyApi.Controllers
 
             var lastMessage = _dbContext.Messages
                 .Where(x => x.UserId == user.Id)
-                .OrderByDescending(m => m.Created)
-                .Include(x => x.Admin)
+                .OrderByDescending(x => x.Id)
                 .FirstOrDefault();
 
-            var packages = _dbContext.Packages.Take(3).ToList();
+            var packages = _dbContext.Packages
+                .Include(x => x.Title)
+                .Include(x => x.Description)
+                .Take(3).ToList();
 
             var message = new Message
             {
-                Type = Enums.MessageType.PackagesPicker,
+                Type = MessageType.PackagesPicker,
                 Content = "",
                 IsFromAdmin = true,
-                AdminId = lastMessage.AdminId
+                UserId = user.Id,
+                AdminId = lastMessage.AdminId,
+                Created = DateTime.UtcNow
             };
 
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
 
-            var messageDTO = new MessageDTO<PackagesList>(message)
+            var packagesListMessage = new MessageDTO<PackagesList>(message)
             {
                 Data = new PackagesList()
                 {
@@ -322,7 +384,52 @@ namespace clearlyApi.Controllers
                 }
             };
 
-            SendMessageSocket(lastMessage.Admin.Login, messageDTO);
+            SendMessageSocket(user.Login, packagesListMessage);
+
+            return Json(new BaseResponse());
+        }
+
+        [Authorize]
+        [HttpPost("setPackage")]
+        public IActionResult SetPackage([FromBody] PackageRequestDTO request)
+        {
+
+            if (request == null)
+                return Json(new { Status = false, Message = "Request cannot be null" });
+
+            if (!Validator.TryValidateObject(request, new ValidationContext(request), null, true))
+                return Json(new { Status = false, Message = "Required Property Not Found" });
+
+
+            var user = _dbContext.Users
+               .FirstOrDefault(x => x.Login == User.Identity.Name);
+
+            if (user == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "User not found"
+                });
+
+            var pack = _dbContext.Packages.Find(request.PackageId);
+            if(pack == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "Package not found"
+                });
+
+            var order = _dbContext.Orders.Find(request.OrderId);
+            if (order == null)
+                return Json(new BaseResponse
+                {
+                    Status = false,
+                    Message = "Order not found"
+                });
+
+            order.PackageId = pack.Id;
+
+            _dbContext.SaveChanges();
 
             return Json(new BaseResponse());
         }
@@ -334,5 +441,7 @@ namespace clearlyApi.Controllers
                     JsonConvert.SerializeObject(message)
                     );
         }
+
+
     }
 }

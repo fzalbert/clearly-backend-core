@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using clearlyApi.Dto.Response;
 using clearlyApi.Entities;
 using clearlyApi.Enums;
-using Newtonsoft.Json;
 
 namespace clearlyApi.Services.Chat
 {
@@ -12,20 +10,8 @@ namespace clearlyApi.Services.Chat
         public MessageDTO(Message message)
         {
             Type = message.Type;
-
-            if (message.Type == MessageType.Text || message.Type == MessageType.Photo)
-                Data = message.Content;
-            else
-                Data = null;
-
-            IsAdmin = message.AdminId == 0 ? false : true;
+            IsAdmin = message.IsFromAdmin;
         }
-
-        public MessageDTO(Message messge, List<Package> packages) : this(messge)
-        {
-            
-        }
-
 
         public bool IsAdmin { get; set; }
         public MessageType Type { get; set; }

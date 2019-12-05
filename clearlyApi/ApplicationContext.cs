@@ -48,6 +48,11 @@ namespace clearlyApi
                 .IsUnique();
 
 
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Sessions)
+                .WithOne(s => s.User)
+                .HasForeignKey(s => s.UserId);
+
         }
     }
 }

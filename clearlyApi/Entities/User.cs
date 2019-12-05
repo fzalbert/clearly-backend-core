@@ -25,8 +25,10 @@ namespace clearlyApi.Entities
 
         public Person Person { get; set; }
 
-        public List<Message> UserMessages { get; set; }
+        public ICollection<Message> UserMessages { get; set; }
 
-        public List<Message> AdminMessages { get; set; }
+        public ICollection<Message> AdminMessages { get; set; }
+
+        public ICollection<AccountSession> Sessions { get; set; }
     }
 }

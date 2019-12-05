@@ -40,7 +40,11 @@ namespace clearlyApi.Services.Chat.Manager
 
         public async Task SendMessageAsync(string socketId, string message)
         {
-            await SendMessageAsync(WebSocketConnectionManager.GetSocketById(socketId), message);
+            var socket = WebSocketConnectionManager.GetSocketById(socketId);
+            if (socket == null)
+                return;
+
+            await SendMessageAsync(socket, message);
         }
 
         public async Task SendMessageToAllAsync(string message)

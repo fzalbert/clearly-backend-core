@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -22,7 +21,5 @@ namespace clearlyApi.Entities
 
         public int AdminId { get; set; }
         public User Admin { get; set; }
-
-        public List<Package> Packages { get; set; }
     }
 }

@@ -8,6 +8,8 @@ namespace clearlyApi.Dto.Response
     {
         public PackageDTOResponse(Package package)
         {
+            Id = package.Id;
+
             Title = package.Title.Ru;
             Description = package.Description.Ru;
 
@@ -15,6 +17,7 @@ namespace clearlyApi.Dto.Response
             Type = package.Type;
         }
 
+        public int Id { get; set; }
         public string Title { get; set; }
 
         public string Description { get; set; }

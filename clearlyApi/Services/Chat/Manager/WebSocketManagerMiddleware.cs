@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace clearlyApi.Services.Chat.Manager
 {
@@ -25,12 +26,14 @@ namespace clearlyApi.Services.Chat.Manager
                 return;
 
             var token = context.Request.Query["token"].ToString();
-            if (token == null)
+            if (string.IsNullOrEmpty(token))
                 return;
 
             var user = dbContext.AccountSessions
-                .FirstOrDefault(x => x.Token == token && x.ExpiredAt < DateTime.UtcNow)
-                .User;
+                .Include(x => x.User)
+                .FirstOrDefault(x => x.Token == token && x.ExpiredAt > DateTime.UtcNow)
+                ?.User;
+
             if (user == null)
                 return;
 
