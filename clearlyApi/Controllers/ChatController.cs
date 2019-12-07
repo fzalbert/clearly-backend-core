@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
@@ -86,7 +87,7 @@ namespace clearlyApi.Controllers
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
 
-            SendMessageSocket(user.Login, new MessageDTO<string>(message) { Data = fileName });
+            SendMessageSocket(user.Login, new MessageDTO(message) { Data = fileName });
 
             return Json(new BaseResponse());
         }
@@ -146,7 +147,7 @@ namespace clearlyApi.Controllers
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
 
-            SendMessageSocket(toUser.Login, new MessageDTO<string>(message) { Data = fileName});
+            SendMessageSocket(toUser.Login, new MessageDTO(message) { Data = fileName});
 
 
             var agePickerMessage = new Message
@@ -160,7 +161,7 @@ namespace clearlyApi.Controllers
             _dbContext.Messages.Add(agePickerMessage);
             _dbContext.SaveChanges();
 
-            SendMessageSocket(toUser.Login, new MessageDTO<string>(agePickerMessage));
+            SendMessageSocket(toUser.Login, new MessageDTO(agePickerMessage));
 
             return Json(new BaseResponse());
         }
@@ -189,9 +190,25 @@ namespace clearlyApi.Controllers
                 .Take(pageSize)
                 .ToList();
 
-            return Json(new DataResponse<Message>
+            var result = new List<MessageDTO>();
+
+            foreach(var item in messages)
             {
-                Data = messages
+                if (item.Type == MessageType.PackagesPicker)
+                {
+                    var packages = _dbContext.Packages
+                                        .Include(x => x.Title)
+                                        .Include(x => x.Description)
+                                        .Take(3).ToList();
+
+                    result.Add(new MessageDTO(item, packages));
+                }
+                else result.Add(new MessageDTO(item));
+            }
+
+            return Json(new DataResponse<MessageDTO>
+            {
+                Data = result
             });
         }
 
@@ -262,7 +279,7 @@ namespace clearlyApi.Controllers
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
 
-            SendMessageSocket(receiverLogin, new MessageDTO<string>(message) { Data = message.Content});
+            SendMessageSocket(receiverLogin, new MessageDTO(message) { Data = message.Content});
 
             return Json(new BaseResponse());
         }
@@ -312,7 +329,7 @@ namespace clearlyApi.Controllers
 
             _dbContext.Messages.Add(message);
 
-            SendMessageSocket(user.Login, new MessageDTO<string>(message) {  });
+            SendMessageSocket(user.Login, new MessageDTO(message));
 
 
             _dbContext.SaveChanges();
@@ -365,7 +382,7 @@ namespace clearlyApi.Controllers
             var message = new Message
             {
                 Type = MessageType.PackagesPicker,
-                Content = "",
+                Content = order.Id.ToString(),
                 IsFromAdmin = true,
                 UserId = user.Id,
                 AdminId = lastMessage.AdminId,
@@ -375,13 +392,15 @@ namespace clearlyApi.Controllers
             _dbContext.Messages.Add(message);
             _dbContext.SaveChanges();
 
-            var packagesListMessage = new MessageDTO<PackagesList>(message)
+            var packagesListMessage = new MessageDTO(message)
             {
-                Data = new PackagesList()
-                {
-                    OrderId = order.Id,
-                    Packages = packages.Select(x => new PackageDTOResponse(x)).ToList()
-                }
+                Data = JsonConvert.SerializeObject(
+                    new PackagesList()
+                    {
+                        OrderId = order.Id,
+                        Packages = packages.Select(x => new PackageDTOResponse(x)).ToList()
+                    }
+                )
             };
 
             SendMessageSocket(user.Login, packagesListMessage);
@@ -434,7 +453,7 @@ namespace clearlyApi.Controllers
             return Json(new BaseResponse());
         }
 
-        private async Task SendMessageSocket<T>(string login, MessageDTO<T> message)
+        private async Task SendMessageSocket(string login, MessageDTO message)
         {
             await _webSocketHandler.SendMessageAsync(
                     login,
