@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace clearlyApi
 {
-    public class ApplicationContext : DbContext
+    public sealed class ApplicationContext : DbContext
     {
         public DbSet<Person> Persons { get; set; }
         public DbSet<User> Users { get; set; }
@@ -22,7 +22,6 @@ namespace clearlyApi
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseMySql("server=127.0.0.1;UserId=root;Password=albert1997;database=clearly-new;");
-
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

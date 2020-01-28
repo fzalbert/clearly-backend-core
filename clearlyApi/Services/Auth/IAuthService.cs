@@ -8,10 +8,10 @@ namespace clearlyApi.Services.Auth
 {
     public interface IAuthService
     {
-        public BaseResponse Register(string login, LoginType loginType);
+        BaseResponse Register(string login, LoginType loginType);
 
-        public BaseResponse Auth(User user);
+        BaseResponse Auth(User user);
 
-        public SecurityTokenViewModel CreateToken(User user);
+        SecurityTokenViewModel CreateToken(User user);
     }
 }

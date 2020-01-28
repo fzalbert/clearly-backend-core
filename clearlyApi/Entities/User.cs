@@ -18,7 +18,7 @@ namespace clearlyApi.Entities
         public UserType UserType { get; set; }
 
         [DefaultValue(false)]
-        public Boolean IsActive { get; set; }
+        public bool IsActive { get; set; }
 
         [DataType(DataType.DateTime)]
         public DateTime Created { get; set; }

@@ -124,7 +124,7 @@ namespace clearlyApi.Controllers
                 });
 
             string fileName = $"{CryptHelper.CreateMD5(DateTime.Now.ToString())}{Path.GetExtension(file.FileName)}";
-            string path = $"{System.IO.Directory.GetCurrentDirectory()}\\Files\\";
+            string path = $"{Directory.GetCurrentDirectory()}\\Files\\";
 
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);

@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmsSender", "SmsSender\SmsSender.csproj", "{639C5318-14DC-40C0-8D11-B0E191FEAE5C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zorra", "Zorra\Zorra.csproj", "{505135F8-526D-4CD3-93EA-20749B4E6A57}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,9 +25,5 @@ Global
 		{639C5318-14DC-40C0-8D11-B0E191FEAE5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{639C5318-14DC-40C0-8D11-B0E191FEAE5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{639C5318-14DC-40C0-8D11-B0E191FEAE5C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{505135F8-526D-4CD3-93EA-20749B4E6A57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{505135F8-526D-4CD3-93EA-20749B4E6A57}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{505135F8-526D-4CD3-93EA-20749B4E6A57}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{505135F8-526D-4CD3-93EA-20749B4E6A57}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

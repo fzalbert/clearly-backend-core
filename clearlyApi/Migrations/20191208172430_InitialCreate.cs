@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace clearlyApi.Migrations
 {
-    public partial class InitMigrattion : Migration
+    public partial class InitialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -29,7 +29,7 @@ namespace clearlyApi.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Login = table.Column<string>(nullable: true),
+                    Login = table.Column<string>(nullable: false),
                     LoginType = table.Column<int>(nullable: false),
                     UserType = table.Column<int>(nullable: false),
                     IsActive = table.Column<bool>(nullable: false),
@@ -76,7 +76,8 @@ namespace clearlyApi.Migrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     UserId = table.Column<int>(nullable: false),
                     Token = table.Column<string>(nullable: true),
-                    Created = table.Column<DateTime>(nullable: false)
+                    Created = table.Column<DateTime>(nullable: false),
+                    ExpiredAt = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -119,6 +120,7 @@ namespace clearlyApi.Migrations
                     Type = table.Column<int>(nullable: false),
                     Content = table.Column<string>(nullable: true),
                     Created = table.Column<DateTime>(nullable: false),
+                    IsFromAdmin = table.Column<bool>(nullable: false),
                     UserId = table.Column<int>(nullable: false),
                     AdminId = table.Column<int>(nullable: false)
                 },
@@ -170,7 +172,7 @@ namespace clearlyApi.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     UserId = table.Column<int>(nullable: false),
-                    PackageId = table.Column<int>(nullable: false),
+                    PackageId = table.Column<int>(nullable: true),
                     Created = table.Column<DateTime>(nullable: false),
                     BankUrl = table.Column<string>(nullable: true),
                     BankOrderId = table.Column<string>(nullable: true),
@@ -184,7 +186,7 @@ namespace clearlyApi.Migrations
                         column: x => x.PackageId,
                         principalTable: "Packages",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Orders_Users_UserId",
                         column: x => x.UserId,
@@ -237,6 +239,12 @@ namespace clearlyApi.Migrations
                 name: "IX_Persons_UserId",
                 table: "Persons",
                 column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Login",
+                table: "Users",
+                column: "Login",
                 unique: true);
         }
 

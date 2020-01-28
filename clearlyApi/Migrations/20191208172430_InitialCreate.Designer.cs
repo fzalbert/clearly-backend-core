@@ -9,8 +9,8 @@ using clearlyApi;
 namespace clearlyApi.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20191202195147_InitMigrattion")]
-    partial class InitMigrattion
+    [Migration("20191208172430_InitialCreate")]
+    partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -26,6 +26,9 @@ namespace clearlyApi.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ExpiredAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Token")
@@ -98,6 +101,9 @@ namespace clearlyApi.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("IsFromAdmin")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
@@ -128,7 +134,7 @@ namespace clearlyApi.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("PackageId")
+                    b.Property<int?>("PackageId")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
@@ -218,7 +224,8 @@ namespace clearlyApi.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Login")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .IsRequired()
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<int>("LoginType")
                         .HasColumnType("int");
@@ -228,13 +235,16 @@ namespace clearlyApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Login")
+                        .IsUnique();
+
                     b.ToTable("Users");
                 });
 
             modelBuilder.Entity("clearlyApi.Entities.AccountSession", b =>
                 {
                     b.HasOne("clearlyApi.Entities.User", "User")
-                        .WithMany()
+                        .WithMany("Sessions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -268,9 +278,7 @@ namespace clearlyApi.Migrations
                 {
                     b.HasOne("clearlyApi.Entities.Package", "Package")
                         .WithMany()
-                        .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PackageId");
 
                     b.HasOne("clearlyApi.Entities.User", "User")
                         .WithMany()
