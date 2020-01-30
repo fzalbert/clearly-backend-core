@@ -34,6 +34,9 @@ namespace clearlyApi.Controllers
             if (!Validator.TryValidateObject(request, new ValidationContext(request), null, true))
                 return Json(new { Status = false, Message = "Required Property Not Found" });
 
+            if(request.Code != "12345")
+                return Json(new { Status = false, Message = "неверный пароль" });
+            
             switch (request.Type)
             {
                 case LoginType.Email:
@@ -56,15 +59,16 @@ namespace clearlyApi.Controllers
                             Message = "Неправильный формат"
                         });
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             var user = dbContext.Users.FirstOrDefault(x => x.Login == request.Login && x.LoginType == request.Type);
 
-            BaseResponse response = null;
             if (user == null)
-                response = authService.Register(request.Login, request.Type);
+                authService.Register(request.Login, request.Type);
             else
-                response = authService.Auth(user);
+                authService.Auth(user);
 
             if(user == null)
                 user = dbContext.Users.FirstOrDefault(x => x.Login == request.Login && x.LoginType == request.Type);
