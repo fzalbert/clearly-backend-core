@@ -73,7 +73,7 @@ namespace clearlyApi
             services.AddSwaggerGen(c =>
             {
 
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Rosseti API", Version = "v0.1.1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Cleanly API", Version = "v0.1.1" });
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
